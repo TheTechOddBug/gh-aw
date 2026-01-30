@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/githubnext/gh-aw/pkg/campaign"
 	"github.com/githubnext/gh-aw/pkg/cli"
 	"github.com/githubnext/gh-aw/pkg/console"
 	"github.com/githubnext/gh-aw/pkg/constants"
@@ -554,7 +553,6 @@ Use "` + string(constants.CLIExtensionPrefix) + ` help all" to show help for all
 	healthCmd := cli.NewHealthCommand()
 	mcpServerCmd := cli.NewMCPServerCommand()
 	prCmd := cli.NewPRCommand()
-	campaignCmd := campaign.NewCommand()
 	secretsCmd := cli.NewSecretsCommand()
 	fixCmd := cli.NewFixCommand()
 	upgradeCmd := cli.NewUpgradeCommand()
@@ -587,7 +585,6 @@ Use "` + string(constants.CLIExtensionPrefix) + ` help all" to show help for all
 	logsCmd.GroupID = "analysis"
 	auditCmd.GroupID = "analysis"
 	healthCmd.GroupID = "analysis"
-	campaignCmd.GroupID = "analysis"
 
 	// Utilities
 	mcpServerCmd.GroupID = "utilities"
@@ -617,7 +614,6 @@ Use "` + string(constants.CLIExtensionPrefix) + ` help all" to show help for all
 	rootCmd.AddCommand(mcpServerCmd)
 	rootCmd.AddCommand(prCmd)
 	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(campaignCmd)
 	rootCmd.AddCommand(secretsCmd)
 	rootCmd.AddCommand(fixCmd)
 	rootCmd.AddCommand(completionCmd)
