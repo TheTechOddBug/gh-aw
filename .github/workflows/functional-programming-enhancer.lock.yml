@@ -25,7 +25,7 @@
 #   Imports:
 #     - shared/reporting.md
 #
-# frontmatter-hash: bd40f012f25775f1722e8a35296eaf3c1607a6d7ece0fd71a8809b93bb5c2814
+# frontmatter-hash: f3c5eb2e1c023e39a425f3eb6e680f762b9b26128e24f1758f6c1ad4883036fa
 
 name: "Functional Programming Enhancer"
 "on":
@@ -420,22 +420,6 @@ jobs:
                 "headers": {
                   "Authorization": "$GH_AW_SAFE_OUTPUTS_API_KEY"
                 }
-              },
-              "serena": {
-                "container": "ghcr.io/githubnext/serena-mcp-server:latest",
-                "args": [
-                  "--network",
-                  "host"
-                ],
-                "entrypoint": "serena",
-                "entrypointArgs": [
-                  "start-mcp-server",
-                  "--context",
-                  "codex",
-                  "--project",
-                  "${{ github.workspace }}"
-                ],
-                "mounts": ["${{ github.workspace }}:${{ github.workspace }}:rw"]
               }
             },
             "gateway": {

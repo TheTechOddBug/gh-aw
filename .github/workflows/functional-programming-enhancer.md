@@ -32,7 +32,6 @@ safe-outputs:
     expires: 7d
 
 tools:
-  serena: ["go"]
   github:
     toolsets: [default]
   edit:
@@ -1239,19 +1238,6 @@ Exit gracefully without creating a PR if:
 - Changes would reduce clarity or maintainability
 - Tests fail after changes
 - Changes are too risky or complex
-
-## Serena Configuration
-
-The Serena MCP server is configured for Go analysis with:
-- **Project Root**: ${{ github.workspace }}
-- **Language**: Go
-- **Memory**: `/tmp/gh-aw/cache-memory/serena/`
-
-Use Serena for:
-- Finding all usages of variables and functions
-- Understanding data flow and dependencies
-- Identifying mutation patterns
-- Analyzing scope and lifetime of variables
 
 ## Output Requirements
 
