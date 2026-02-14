@@ -22,11 +22,11 @@ head:
   - tag: meta
     attrs:
       property: og:description
-      content: "A curated tour of workflows that coordinate multi-agent projects"
+      content: "A curated tour of agentic workflows that coordinate multi-agent projects"
   - tag: meta
     attrs:
       property: og:image
-      content: https://github.github.io/gh-aw/peli.png
+      content: https://github.github.com/gh-aw/peli.png
   - tag: meta
     attrs:
       property: og:type
@@ -34,7 +34,7 @@ head:
   - tag: meta
     attrs:
       property: og:url
-      content: https://github.github.io/gh-aw/blog/2026-01-13-meet-the-workflows-campaigns/
+      content: https://github.github.com/gh-aw/blog/2026-01-13-meet-the-workflows-campaigns/
   - tag: meta
     attrs:
       name: twitter:card
@@ -42,7 +42,7 @@ head:
   - tag: meta
     attrs:
       name: twitter:image
-      content: https://github.github.io/gh-aw/peli.png
+      content: https://github.github.com/gh-aw/peli.png
 ---
 
 <img src="/gh-aw/peli.png" alt="Peli de Halleux" width="200" style="float: right; margin: 0 0 20px 20px; border-radius: 8px;" />
