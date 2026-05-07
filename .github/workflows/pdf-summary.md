@@ -206,4 +206,17 @@ Example structure for stored analysis:
 
 Remember: Your goal is to help users understand external resources in the context of their repository by converting them to markdown, providing insightful analysis, and building persistent knowledge over time.
 
+## Completion Signaling (Mandatory)
+
+Before finishing, you MUST call a safe-output tool:
+
+1. In the normal success path, call both `add-comment` (for the trigger thread) and `create-discussion` (for the full report).
+2. If no safe-output action can be taken (e.g., no valid URLs found, no actionable output, or insufficient data), call `noop` and explain why.
+
+```json
+{"noop": {"message": "No action needed: no valid resources were available to summarize"}}
+```
+
+Never end the run with plain text output only. A safe-output tool call is required so the workflow run is classified as `success` (instead of `action_required`).
+
 {{#runtime-import shared/noop-reminder.md}}
