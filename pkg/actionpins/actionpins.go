@@ -220,6 +220,14 @@ func FormatPinnedActionReference(repo, sha, version string) string {
 	return repo + "@" + sha + " # " + version
 }
 
+func formatPinnedActionWithResolution(repo, sha, sourceVersion, resolvedVersion string) string {
+	if sourceVersion == resolvedVersion || resolvedVersion == "" {
+		return FormatPinnedActionReference(repo, sha, sourceVersion)
+	}
+
+	return FormatPinnedActionReference(repo, sha, resolvedVersion+" (source "+sourceVersion+")")
+}
+
 // FormatCacheKey generates a cache key for action resolution.
 // Example: "actions/checkout@v4"
 func FormatCacheKey(repo, version string) string {
@@ -359,7 +367,7 @@ func ResolveActionPin(actionRepo, version string, ctx *PinContext) (string, erro
 			}
 			log.Printf("Using version in non-strict mode: %s@%s (requested) → %s@%s (used)",
 				actionRepo, version, actionRepo, selectedPin.Version)
-			return FormatPinnedActionReference(actionRepo, selectedPin.SHA, version), nil
+			return formatPinnedActionWithResolution(actionRepo, selectedPin.SHA, version, selectedPin.Version), nil
 		}
 	}
 
