@@ -134,6 +134,11 @@ func (c *Compiler) validatePermissions(workflowData *WorkflowData, markdownPath 
 		}
 	}
 
+	// Enforce required id-token: write permission for engine.auth.type=github-oidc.
+	if err := validateEngineAuthPermissions(workflowData, workflowPermissions); err != nil {
+		return nil, formatCompilerError(markdownPath, "error", err.Error(), err)
+	}
+
 	// Emit warning if id-token: write permission is detected
 	log.Printf("Checking for id-token: write permission")
 	if level, exists := workflowPermissions.Get(PermissionIdToken); exists && level == PermissionWrite {
@@ -145,4 +150,24 @@ Ensure proper audience validation and trust policies are configured.`
 	}
 
 	return workflowPermissions, nil
+}
+
+func validateEngineAuthPermissions(workflowData *WorkflowData, workflowPermissions *Permissions) error {
+	if workflowData == nil || workflowData.EngineConfig == nil || workflowData.EngineConfig.Auth == nil {
+		return nil
+	}
+
+	if workflowData.EngineConfig.Auth.Type != "github-oidc" {
+		return nil
+	}
+
+	if workflowPermissions == nil {
+		return fmt.Errorf("engine.auth.type: github-oidc requires permissions.id-token: write")
+	}
+
+	if level, exists := workflowPermissions.Get(PermissionIdToken); !exists || level != PermissionWrite {
+		return fmt.Errorf("engine.auth.type: github-oidc requires permissions.id-token: write")
+	}
+
+	return nil
 }
