@@ -6,15 +6,15 @@ sidebar:
   badge: { text: 'Hybrid', variant: 'caution' }
 ---
 
-GitHub Agentic Workflows combine deterministic computation with AI reasoning, enabling data preprocessing, custom trigger filtering, and post-processing patterns. This includes the **DataOps** sub-pattern where shell commands in [`steps:`](/gh-aw/reference/workflow-structure/) reliably collect and prepare data — fast, cacheable, and reproducible — then the AI agent reads the results and generates insights. Use this for data aggregation, report generation, trend analysis, auditing, and any hybrid pipeline.
+GitHub Agentic Workflows combine deterministic computation ([`steps:`](/gh-aw/reference/steps-jobs/#custom-steps-steps) and [`jobs:`](/gh-aw/reference/steps-jobs/#custom-jobs-jobs)) with AI reasoning, enabling data preprocessing, custom trigger filtering, and post-processing patterns. This pattern can reliably collect and prepare data, then the AI agent reads the results and generates insights. Use this for data aggregation, report generation, trend analysis, auditing, and any hybrid pipeline.
 
 ## When to Use
 
 Combine deterministic steps with AI agents to precompute data, filter triggers, preprocess inputs, post-process outputs, or build multi-stage computation and reasoning pipelines.
 
-## Architecture
+## Example: Release Highlights Generator
 
-Define deterministic jobs in frontmatter alongside agentic execution:
+This workflow generates release highlights for new tags. It uses deterministic steps to fetch structured data about the release and recent PRs, then the AI agent synthesizes this into a release summary.
 
 ```mermaid
 flowchart TD
@@ -22,7 +22,7 @@ flowchart TD
     agent -- safe-outputs --> so[Safe output jobs]
 ```
 
-## Precomputation Example
+Example workflow:
 
 ```yaml wrap title=".github/workflows/release-highlights.md"
 ---
@@ -48,7 +48,11 @@ Generate release highlights for `${GITHUB_REF#refs/tags/}`. Analyze PRs in `/tmp
 
 Files in `/tmp/gh-aw/agent/` are automatically uploaded as artifacts and available to the AI agent.
 
-## Multi-Job Pattern
+## Example: Multi-Job Pattern
+
+This workflow uses a separate filter job to check if a release is a major version before running the agent, skipping the workflow run entirely for minor/patch releases.
+
+Example workflow:
 
 ```yaml wrap title=".github/workflows/static-analysis.md"
 ---

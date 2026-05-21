@@ -32,8 +32,10 @@ Example workflow:
 ---
 on:
   label_command: deploy
+
 permissions:
   contents: read
+
 safe-outputs:
   add-comment:
     max: 1
@@ -119,9 +121,11 @@ on:
   issues:
     types: [labeled]
     names: [bug, critical, security]
+
 permissions:
   contents: read
   actions: read
+
 safe-outputs:
   add-comment:
     max: 1

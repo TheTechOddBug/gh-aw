@@ -14,7 +14,7 @@ flowchart LR
     agent --> output[Safe outputs]
 ```
 
-By default, only users with write permissions can trigger ChatOps commands. Narrow or widen that with `on.roles:` — see [Repository Access Roles](/gh-aw/reference/frontmatter/#repository-access-roles-onroles).
+By default, only users with write permissions can trigger ChatOps commands. Narrow or widen that with `on.roles:` — see [Repository Access Roles](/gh-aw/reference/triggers/#repository-access-roles-onroles).
 
 ## Example: Code Reviewer
 

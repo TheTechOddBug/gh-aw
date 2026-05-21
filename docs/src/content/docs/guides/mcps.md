@@ -20,9 +20,11 @@ Create a workflow file at `.github/workflows/my-workflow.md`:
 on:
   issues:
     types: [opened]
+
 permissions:
   contents: read
   issues: read
+
 tools:
   github:
     toolsets: [default]
@@ -233,12 +235,15 @@ gh aw mcp add my-workflow server-name --registry https://custom.registry.com/v1 
 on:
   issues:
     types: [opened]
+
 permissions:
   contents: read
   issues: read
+
 tools:
   github:
     toolsets: [default]
+
 safe-outputs:
   add-comment:
 ---
@@ -253,13 +258,16 @@ Analyze issue #${{ github.event.issue.number }} and add a comment with category,
 ```aw wrap
 ---
 on: weekly on sunday
+
 permissions:
   contents: read
   security-events: read
   discussions: write
+
 tools:
   github:
     toolsets: [default, code_security, discussions]
+
 safe-outputs:
   create-discussion:
     category: "Security"

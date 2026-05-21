@@ -29,9 +29,11 @@ MultiRepoOps workflows use the `target-repo` parameter on safe outputs to create
 on:
   issues:
     types: [opened, labeled]
+
 permissions:
   contents: read
   actions: read
+
 safe-outputs:
   github-token: ${{ secrets.GH_AW_CROSS_REPO_PAT }}
   create-issue:

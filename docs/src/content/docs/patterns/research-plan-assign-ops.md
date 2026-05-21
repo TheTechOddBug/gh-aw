@@ -27,16 +27,20 @@ The [`go-fan`](https://github.com/github/gh-aw/blob/main/.github/workflows/go-fa
 ```aw wrap
 ---
 name: Go Fan
+
 on:
   schedule: daily on weekdays
   workflow_dispatch:
+
 engine: claude
+
 safe-outputs:
   create-discussion:
     title-prefix: "[go-fan] "
     category: "audits"
     max: 1
     close-older-discussions: true
+
 tools:
   cache-memory: true
   github:
@@ -73,10 +77,13 @@ Issues can be assigned individually through the GitHub UI, or pre-assigned in bu
 ```aw wrap
 ---
 name: Auto-assign plan issues to Copilot
+
 on:
   issues:
     types: [labeled]
+
 engine: copilot
+
 safe-outputs:
   assign-to-user:
     target: "*"
