@@ -664,4 +664,131 @@ describe("close_discussion", () => {
       });
     });
   });
+
+  describe("target-repo support", () => {
+    it("should use target-repo config for getDiscussionDetails query", async () => {
+      const handler = await main({
+        max: 10,
+        "target-repo": "external-org/external-repo",
+      });
+
+      const queryCalls = [];
+      mockGithub.graphql = async (query, variables) => {
+        queryCalls.push({ query, variables });
+        if (query.includes("closeDiscussion")) {
+          return { closeDiscussion: { discussion: { id: "D_1", url: "https://github.com/external-org/external-repo/discussions/5" } } };
+        }
+        if (query.includes("addDiscussionComment")) {
+          return { addDiscussionComment: { comment: { id: "DC_1", url: "url" } } };
+        }
+        return {
+          repository: {
+            discussion: {
+              id: "D_kwDOTest123",
+              title: "Test Discussion",
+              closed: false,
+              category: { name: "General" },
+              url: "https://github.com/external-org/external-repo/discussions/5",
+              labels: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } },
+            },
+          },
+        };
+      };
+
+      const result = await handler({ discussion_number: 5, body: "Closing" }, {});
+
+      expect(result.success).toBe(true);
+      const detailsQuery = queryCalls.find(c => c.query.includes("repository(owner"));
+      expect(detailsQuery).toBeDefined();
+      expect(detailsQuery.variables.owner).toBe("external-org");
+      expect(detailsQuery.variables.repo).toBe("external-repo");
+    });
+
+    it("should use context.repo as default when no target-repo configured", async () => {
+      const handler = await main({ max: 10 });
+
+      const queryCalls = [];
+      mockGithub.graphql = async (query, variables) => {
+        queryCalls.push({ query, variables });
+        if (query.includes("closeDiscussion")) {
+          return { closeDiscussion: { discussion: { id: "D_1", url: "url" } } };
+        }
+        if (query.includes("addDiscussionComment")) {
+          return { addDiscussionComment: { comment: { id: "DC_1", url: "url" } } };
+        }
+        return {
+          repository: {
+            discussion: {
+              id: "D_kwDOTest123",
+              title: "Test Discussion",
+              closed: false,
+              category: { name: "General" },
+              url: "https://github.com/test-owner/test-repo/discussions/42",
+              labels: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } },
+            },
+          },
+        };
+      };
+
+      const result = await handler({ discussion_number: 42, body: "Closing" }, {});
+
+      expect(result.success).toBe(true);
+      const detailsQuery = queryCalls.find(c => c.query.includes("repository(owner"));
+      expect(detailsQuery).toBeDefined();
+      expect(detailsQuery.variables.owner).toBe("test-owner");
+      expect(detailsQuery.variables.repo).toBe("test-repo");
+    });
+
+    it("should reject item.repo not in allowed_repos", async () => {
+      const handler = await main({
+        max: 10,
+        "target-repo": "default-org/default-repo",
+        allowed_repos: ["default-org/default-repo"],
+      });
+
+      const result = await handler({ discussion_number: 5, repo: "evil-org/evil-repo" }, {});
+
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/not allowed|evil-org\/evil-repo/);
+    });
+
+    it("should use item.repo when it is in allowed_repos", async () => {
+      const handler = await main({
+        max: 10,
+        "target-repo": "default-org/default-repo",
+        allowed_repos: ["default-org/default-repo", "other-org/other-repo"],
+      });
+
+      const queryCalls = [];
+      mockGithub.graphql = async (query, variables) => {
+        queryCalls.push({ query, variables });
+        if (query.includes("closeDiscussion")) {
+          return { closeDiscussion: { discussion: { id: "D_1", url: "https://github.com/other-org/other-repo/discussions/9" } } };
+        }
+        if (query.includes("addDiscussionComment")) {
+          return { addDiscussionComment: { comment: { id: "DC_1", url: "url" } } };
+        }
+        return {
+          repository: {
+            discussion: {
+              id: "D_kwDOOther",
+              title: "Other Discussion",
+              closed: false,
+              category: { name: "General" },
+              url: "https://github.com/other-org/other-repo/discussions/9",
+              labels: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } },
+            },
+          },
+        };
+      };
+
+      const result = await handler({ discussion_number: 9, repo: "other-org/other-repo" }, {});
+
+      expect(result.success).toBe(true);
+      const detailsQuery = queryCalls.find(c => c.query.includes("repository(owner"));
+      expect(detailsQuery).toBeDefined();
+      expect(detailsQuery.variables.owner).toBe("other-org");
+      expect(detailsQuery.variables.repo).toBe("other-repo");
+    });
+  });
 });
