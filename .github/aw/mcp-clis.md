@@ -5,6 +5,7 @@ description: MCP CLI command usage guidance and JSON payload patterns
 # MCP CLI Usage
 
 The MCP CLI feature exposes mounted MCP servers as shell commands on `PATH` and provides a consistent command interface for tool calls.
+They are enabled by `tools.cli-proxy: true`.
 
 > **IMPORTANT**: For `safeoutputs` and `mcpscripts`, **always use the CLI commands** instead of the equivalent MCP tools. The CLI wrappers are the preferred interface — do **not** call their MCP tools directly even though they may appear in your tool list.
 >
