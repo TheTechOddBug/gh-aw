@@ -648,17 +648,20 @@ validate-registry:
 	@echo "Validating model_multipliers.json (R-REG-007: no placeholder or null multipliers)..."
 	@go test ./pkg/cli/... -run TestModelMultipliersNoPlaceholders -count=1
 
-MODELS_DEV_MODELS_JSON_URL ?= https://raw.githubusercontent.com/anomalyco/models.dev/refs/heads/dev/models.json
+MODELS_DEV_MODELS_JSON_URL ?= https://models.dev/catalog.json
 
 .PHONY: refresh-models-json
 refresh-models-json:
 	@echo "Refreshing models.json from $(MODELS_DEV_MODELS_JSON_URL)..."
-	@tmp=$$(mktemp); \
-	curl -fsSL "$(MODELS_DEV_MODELS_JSON_URL)" | jq '.data |= map(select(.id | test("^(github|anthropic|openai)/")) | {id, pricing})' > "$$tmp"; \
+	@set -e; \
+	tmp=$$(mktemp); \
+	src=$$(mktemp); \
+	trap 'rm -f "$$tmp" "$$src"' EXIT; \
+	curl -fsSL "$(MODELS_DEV_MODELS_JSON_URL)" -o "$$src"; \
+	jq '{providers: ((.providers // {}) | with_entries(select(.key | test("^(anthropic|openai|github-copilot)$$"))) | with_entries(.value |= {models: ((.models // {}) | with_entries(.value |= {cost: ((.cost // {}) | with_entries(select(.value != null)) | with_entries(.value |= (./1000000 | tostring)))}) )}))}' "$$src" > "$$tmp"; \
 	cp "$$tmp" pkg/cli/data/models.json; \
 	cp "$$tmp" actions/setup/js/models.json; \
-	rm -f "$$tmp"; \
-	echo "✓ Refreshed pkg/cli/data/models.json and actions/setup/js/models.json (github/anthropic/openai only)"
+	echo "✓ Refreshed pkg/cli/data/models.json and actions/setup/js/models.json (catalog providers: anthropic, openai, github-copilot)"
 
 # Check file sizes and function counts
 .PHONY: check-file-sizes
