@@ -13,6 +13,10 @@ import (
 
 var consolidatedSafeOutputsJobLog = logger.New("workflow:compiler_safe_outputs_job")
 
+// stepNameLinePrefix matches the canonical YAML line emitted by this compiler for
+// step starts in job.Steps (6-space indent + "- name: ").
+const stepNameLinePrefix = "      - name: "
+
 // buildConsolidatedSafeOutputsJob builds a single job containing all safe output operations
 // as separate steps within that job. This reduces the number of jobs in the workflow
 // while maintaining observability through distinct step names, IDs, and outputs.
@@ -445,6 +449,15 @@ func (c *Compiler) buildSafeOutputsJobFromParts(
 			countParentSpanID := setupParentSpanNeedsExpr(constants.ActivationJobName)
 			insertIndex += len(c.generateSetupStep(data, setupActionRef, SetupActionDestination, data.SafeOutputs != nil && data.SafeOutputs.UploadArtifact != nil, countTraceID, countParentSpanID))
 		}
+		// Keep insertion index aligned with setup steps that may be injected between setup
+		// and artifact downloads. Count the entries each mask helper appends so the index
+		// stays self-consistent if either helper ever emits more than one step.
+		if isOTLPHeadersPresent(data) {
+			insertIndex += strings.Count(generateOTLPHeadersMaskStep(), stepNameLinePrefix)
+		}
+		if isOTLPAttributesPresent(data) {
+			insertIndex += strings.Count(generateOTLPAttributesMaskStep(), stepNameLinePrefix)
+		}
 
 		// Add artifact download steps count
 		insertIndex += len(buildAgentOutputDownloadSteps(agentArtifactPrefix, c.getActionPin))
@@ -469,6 +482,18 @@ func (c *Compiler) buildSafeOutputsJobFromParts(
 
 		// Note: App token step must be inserted BEFORE shared checkout steps
 		// because those steps reference steps.safe-outputs-app-token.outputs.token
+		//
+		// The insertion index is line-oriented; if it lands in the middle of a
+		// multi-line run/with block, move it to the next step boundary.
+		for insertIndex < len(steps) && !strings.HasPrefix(steps[insertIndex], stepNameLinePrefix) {
+			insertIndex++
+		}
+		if insertIndex == len(steps) {
+			consolidatedSafeOutputsJobLog.Printf(
+				"WARN: app-token insertion reached end of steps slice (len=%d); step ordering may be incorrect",
+				len(steps),
+			)
+		}
 
 		// Insert app token steps
 		var newSteps []string
