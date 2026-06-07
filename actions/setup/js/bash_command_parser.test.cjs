@@ -105,6 +105,16 @@ describe("splitOnPipelineOperators", () => {
     expect(segments).toEqual(["pwd", "ls -la", "safeoutputs --help"]);
   });
 
+  it("splits on newlines as sequential separators", () => {
+    const segments = splitOnPipelineOperators("pwd\nls -la\nsafeoutputs --help");
+    expect(segments).toEqual(["pwd", "ls -la", "safeoutputs --help"]);
+  });
+
+  it("does not split on escaped newline continuations", () => {
+    const segments = splitOnPipelineOperators("git log \\\n  --oneline \\\n  --max-count=1");
+    expect(segments).toEqual(["git log --oneline --max-count=1"]);
+  });
+
   it("trims leading/trailing whitespace from each segment", () => {
     const segments = splitOnPipelineOperators("  ls /tmp  &&  cat file  ");
     expect(segments[0]).toBe("ls /tmp");
@@ -137,6 +147,18 @@ describe("extractCommandName", () => {
     expect(extractCommandName("FOO=bar BAZ=qux echo hi")).toBe("echo");
   });
 
+  it("skips leading env-var assignment with quoted spaces", () => {
+    expect(extractCommandName("FILES='a b c' echo hi")).toBe("echo");
+  });
+
+  it("skips leading env-var assignment with double-quoted spaces", () => {
+    expect(extractCommandName('FILES="a b c" echo hi')).toBe("echo");
+  });
+
+  it("skips leading env-var assignment with escaped quote in double-quoted value", () => {
+    expect(extractCommandName('FILES="a \\"b\\" c" echo hi')).toBe("echo");
+  });
+
   it("handles negation operator ! and returns next command", () => {
     expect(extractCommandName("! ls /tmp")).toBe("ls");
   });
@@ -153,8 +175,28 @@ describe("extractCommandName", () => {
     expect(extractCommandName("else")).toBeNull();
   });
 
+  it("extracts command after shell keyword 'else'", () => {
+    expect(extractCommandName("else cat file")).toBe("cat");
+  });
+
   it("returns null for shell keyword 'fi'", () => {
     expect(extractCommandName("fi")).toBeNull();
+  });
+
+  it("extracts command after shell keyword 'elif'", () => {
+    expect(extractCommandName("elif grep x file")).toBe("grep");
+  });
+
+  it("returns null for shell keyword 'if'", () => {
+    expect(extractCommandName("if [ -f file ]")).toBeNull();
+  });
+
+  it("returns null for shell keyword 'for'", () => {
+    expect(extractCommandName("for f in a b c")).toBeNull();
+  });
+
+  it("extracts command after shell keyword 'do'", () => {
+    expect(extractCommandName("do git status")).toBe("git");
   });
 
   it("returns null for a bare redirection like >file", () => {
@@ -280,6 +322,26 @@ describe("extractCommandNamesFromPipeline", () => {
   it("handles date with flags", () => {
     expect(extractCommandNamesFromPipeline("date +%Y-%m-%d && echo done")).toEqual(["date", "echo"]);
   });
+
+  it("extracts all command names from multiline script with variables and control flow", () => {
+    const cmd = `set -euo pipefail
+CACHE_DIR='cache/gh-aw/cache-memory/compiler-quality'
+ANALYSES_DIR="$CACHE_DIR/analyses"
+mkdir -p "$ANALYSES_DIR"
+FILES='compiler.go compiler_activation_jobs.go compiler_orchestrator.go compiler_jobs.go compiler_safe_outputs.go compiler_safe_outputs_config.go compiler_safe_outputs_job.go compiler_yaml.go compiler_yaml_main_job.go'
+for f in $FILES; do git -C /home/runner/work/gh-aw/gh-aw log -1 --format='%H' -- "pkg/workflow/$f" | sed "s|^|$f |"; done
+printf '---ROTATION---\n'
+if [ -f "$CACHE_DIR/rotation.json" ]; then cat "$CACHE_DIR/rotation.json"; fi
+printf '\n---HASHES---\n'
+if [ -f "$CACHE_DIR/file-hashes.json" ]; then cat "$CACHE_DIR/file-hashes.json"; fi
+printf '\n---FILES---\n'
+for f in $FILES; do wc -l "/home/runner/work/gh-aw/gh-aw/pkg/workflow/$f"; done`;
+    expect(extractCommandNamesFromPipeline(cmd)).toEqual(["set", "mkdir", "git", "sed", "printf", "cat", "wc"]);
+  });
+
+  it("keeps continued multiline command as one extracted command", () => {
+    expect(extractCommandNamesFromPipeline("git log \\\n  --oneline \\\n  --max-count=1")).toEqual(["git"]);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -351,7 +413,7 @@ describe("extractCommandName – extensive vectors", () => {
     { id: "BP-EC-004", segment: "2>&1", expected: null },
     { id: "BP-EC-005", segment: ">out.txt", expected: null },
     { id: "BP-EC-006", segment: "A=1 B=2 safeoutputs missing_data", expected: "safeoutputs" },
-    { id: "BP-EC-007", segment: "then cat file", expected: null },
+    { id: "BP-EC-007", segment: "then cat file", expected: "cat" },
     { id: "BP-EC-008", segment: "fi", expected: null },
     { id: "BP-EC-009", segment: "do", expected: null },
     { id: "BP-EC-010", segment: "done", expected: null },
