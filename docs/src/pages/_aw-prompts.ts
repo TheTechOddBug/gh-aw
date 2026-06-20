@@ -58,12 +58,16 @@ export function getAwPrompts(): AwPrompt[] {
 		return [];
 	}
 
-	return getAwPromptFiles().map((file) => {
-		const content = readFileSync(join(awDir, file), 'utf-8');
-		return {
-			file,
-			description: parseFrontmatterDescription(content),
-			rawUrl: `${RAW_BASE}/${file}`,
-		};
-	});
+	try {
+		return getAwPromptFiles().map((file) => {
+			const content = readFileSync(join(awDir, file), 'utf-8');
+			return {
+				file,
+				description: parseFrontmatterDescription(content),
+				rawUrl: `${RAW_BASE}/${file}`,
+			};
+		});
+	} catch {
+		return [];
+	}
 }
