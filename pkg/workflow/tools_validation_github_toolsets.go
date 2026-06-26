@@ -13,11 +13,15 @@ import (
 
 func validateGitHubToolsAgainstToolsetsCore(allowedTools []string, enabledToolsets []string) error {
 	githubToolToToolsetLog.Printf("Validating GitHub tools against toolsets: allowed_tools=%d, enabled_toolsets=%d", len(allowedTools), len(enabledToolsets))
-
 	if len(allowedTools) == 0 {
 		githubToolToToolsetLog.Print("No tools to validate, skipping")
 		// No specific tools restricted, validation not needed
 		return nil
+	}
+
+	toolToToolsetMap, err := getGitHubToolToToolsetMap()
+	if err != nil {
+		return fmt.Errorf("failed to load GitHub tool-to-toolset mapping: %w", err)
 	}
 
 	// Create a set of enabled toolsets for fast lookup
@@ -42,13 +46,13 @@ func validateGitHubToolsAgainstToolsetsCore(allowedTools []string, enabledToolse
 			continue
 		}
 
-		requiredToolset, exists := GitHubToolToToolsetMap[tool]
+		requiredToolset, exists := toolToToolsetMap[tool]
 		if !exists {
 			githubToolToToolsetLog.Printf("Tool %s not found in mapping, checking for typo", tool)
 
 			// Get all valid tool names for suggestion
-			validTools := make([]string, 0, len(GitHubToolToToolsetMap))
-			for validTool := range GitHubToolToToolsetMap {
+			validTools := make([]string, 0, len(toolToToolsetMap))
+			for validTool := range toolToToolsetMap {
 				validTools = append(validTools, validTool)
 			}
 			sort.Strings(validTools)
@@ -89,8 +93,8 @@ func validateGitHubToolsAgainstToolsetsCore(allowedTools []string, enabledToolse
 		}
 
 		// Show a few examples of valid tools
-		validTools := make([]string, 0, len(GitHubToolToToolsetMap))
-		for tool := range GitHubToolToToolsetMap {
+		validTools := make([]string, 0, len(toolToToolsetMap))
+		for tool := range toolToToolsetMap {
 			validTools = append(validTools, tool)
 		}
 		sort.Strings(validTools)

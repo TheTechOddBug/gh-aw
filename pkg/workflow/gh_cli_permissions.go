@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/github/gh-aw/pkg/logger"
 	"github.com/goccy/go-yaml"
@@ -74,12 +75,10 @@ type compiledAPIPathPattern struct {
 	appPermissions []PermissionScope
 }
 
-var ghCLIPermissions compiledGHCLIPermissions
-
-func init() {
+var getCompiledGHCLIPermissions = sync.OnceValues(func() (compiledGHCLIPermissions, error) {
 	var data ghCLIPermissionsData
 	if err := json.Unmarshal(ghCLIPermissionsJSON, &data); err != nil {
-		panic(fmt.Sprintf("failed to load gh CLI permissions from JSON: %v", err))
+		return compiledGHCLIPermissions{}, fmt.Errorf("failed to load gh CLI permissions from JSON: %w", err)
 	}
 
 	cp := compiledGHCLIPermissions{
@@ -99,7 +98,13 @@ func init() {
 	}
 	sort.Strings(groups) // deterministic alternation order
 	subcommandPattern := `(?m)(?:^|[\s|;])gh\s+(` + strings.Join(groups, "|") + `)\s+([\w][\w-]*)\b`
-	cp.subcommandRE = regexp.MustCompile(subcommandPattern)
+	// Defensive check: the pattern is built from embedded JSON keys quoted with
+	// regexp.QuoteMeta, so a compile error would indicate unexpected data corruption.
+	subcommandRE, err := regexp.Compile(subcommandPattern)
+	if err != nil {
+		return compiledGHCLIPermissions{}, fmt.Errorf("invalid gh subcommand pattern %q: %w", subcommandPattern, err)
+	}
+	cp.subcommandRE = subcommandRE
 
 	for group, sg := range data.SubcommandGroups {
 		readPerms := make([]PermissionScope, len(sg.ReadPermissions))
@@ -138,7 +143,7 @@ func init() {
 	for _, ap := range data.APIPathPatterns {
 		re, err := regexp.Compile(ap.Pattern)
 		if err != nil {
-			panic(fmt.Sprintf("invalid gh API path pattern %q in gh_cli_permissions.json: %v", ap.Pattern, err))
+			return compiledGHCLIPermissions{}, fmt.Errorf("invalid gh API path pattern %q in gh_cli_permissions.json: %w", ap.Pattern, err)
 		}
 		perms := make([]PermissionScope, len(ap.Permissions))
 		for i, p := range ap.Permissions {
@@ -155,9 +160,9 @@ func init() {
 		})
 	}
 
-	ghCLIPermissions = cp
 	ghCLIPermissionsLog.Printf("Loaded gh CLI permissions: version=%s, subcommand_groups=%d, api_path_patterns=%d", data.Version, len(data.SubcommandGroups), len(data.APIPathPatterns))
-}
+	return cp, nil
+})
 
 // ghAPICmdRE matches `gh api` at a command boundary, capturing the rest of the line.
 var ghAPICmdRE = regexp.MustCompile(`(?m)(?:^|[\s|;])gh\s+api\s+(.+)`)
@@ -275,9 +280,13 @@ func splitShellTokens(s string) []string {
 // Only read-level permissions are inferred here; write-level operations are
 // intentionally not auto-escalated. Use detectWriteCommandsInShellScripts to
 // surface write commands as validation errors.
-func inferPermissionsFromShellScripts(scripts []string) map[PermissionScope]PermissionLevel {
+func inferPermissionsFromShellScripts(scripts []string) (map[PermissionScope]PermissionLevel, error) {
 	ghCLIPermissionsLog.Printf("Inferring permissions from %d shell script(s)", len(scripts))
 	perms := make(map[PermissionScope]PermissionLevel)
+	ghCLIPermissions, err := getCompiledGHCLIPermissions()
+	if err != nil {
+		return nil, fmt.Errorf("load gh CLI permissions: %w", err)
+	}
 
 	addScopes := func(scopes []PermissionScope) {
 		for _, scope := range scopes {
@@ -337,14 +346,18 @@ func inferPermissionsFromShellScripts(scripts []string) map[PermissionScope]Perm
 	}
 
 	ghCLIPermissionsLog.Printf("Inferred %d permission scope(s) from shell scripts", len(perms))
-	return perms
+	return perms, nil
 }
 
 // detectWriteCommandsInShellScripts returns all write gh CLI commands found in the
 // given scripts, formatted as "gh <group> <action>" (e.g. "gh pr create").
 // The slice contains no duplicates and is sorted deterministically in discovery order.
-func detectWriteCommandsInShellScripts(scripts []string) []string {
+func detectWriteCommandsInShellScripts(scripts []string) ([]string, error) {
 	ghCLIPermissionsLog.Printf("Scanning %d shell script(s) for write gh CLI commands", len(scripts))
+	ghCLIPermissions, err := getCompiledGHCLIPermissions()
+	if err != nil {
+		return nil, fmt.Errorf("load gh CLI permissions: %w", err)
+	}
 	var found []string
 	seen := make(map[string]struct{})
 
@@ -367,7 +380,7 @@ func detectWriteCommandsInShellScripts(scripts []string) []string {
 	if len(found) > 0 {
 		ghCLIPermissionsLog.Printf("Detected %d write gh CLI command(s) in shell scripts", len(found))
 	}
-	return found
+	return found, nil
 }
 
 // extractRunScriptsFromSectionYAML parses a step-section YAML string (e.g. as stored in

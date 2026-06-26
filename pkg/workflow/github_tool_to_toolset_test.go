@@ -270,21 +270,22 @@ func TestGitHubToolToToolsetMap_Completeness(t *testing.T) {
 	}
 
 	foundToolsets := make(map[string]bool)
-	for _, toolset := range GitHubToolToToolsetMap {
+	for _, toolset := range loadGitHubToolToToolsetMap(t) {
 		foundToolsets[toolset] = true
 	}
 
 	for _, expectedToolset := range expectedToolsets {
 		if !foundToolsets[expectedToolset] {
-			t.Errorf("Expected to find tools for toolset %q in GitHubToolToToolsetMap", expectedToolset)
+			t.Errorf("Expected to find tools for toolset %q in getGitHubToolToToolsetMap()", expectedToolset)
 		}
 	}
 }
 
 func TestGitHubToolToToolsetMap_IncludesDefaultGitHubTools(t *testing.T) {
+	toolToToolsetMap := loadGitHubToolToToolsetMap(t)
 	for _, tool := range constants.DefaultReadOnlyGitHubTools {
-		if _, exists := GitHubToolToToolsetMap[tool]; !exists {
-			t.Errorf("Expected tool %q from constants.DefaultReadOnlyGitHubTools to be in GitHubToolToToolsetMap", tool)
+		if _, exists := toolToToolsetMap[tool]; !exists {
+			t.Errorf("Expected tool %q from constants.DefaultReadOnlyGitHubTools to be in getGitHubToolToToolsetMap()", tool)
 		}
 	}
 }
@@ -314,16 +315,27 @@ func TestGitHubToolToToolsetMap_ConsistencyWithDocumentation(t *testing.T) {
 		"list_secret_scanning_alerts": "secret_protection",
 	}
 
+	toolToToolsetMap := loadGitHubToolToToolsetMap(t)
 	for tool, expectedToolset := range expectedMappings {
-		actualToolset, exists := GitHubToolToToolsetMap[tool]
+		actualToolset, exists := toolToToolsetMap[tool]
 		if !exists {
-			t.Errorf("Expected tool %q to be in GitHubToolToToolsetMap", tool)
+			t.Errorf("Expected tool %q to be in getGitHubToolToToolsetMap()", tool)
 			continue
 		}
 		if actualToolset != expectedToolset {
 			t.Errorf("Tool %q: expected toolset %q, got %q", tool, expectedToolset, actualToolset)
 		}
 	}
+}
+
+func loadGitHubToolToToolsetMap(t *testing.T) map[string]string {
+	t.Helper()
+
+	toolToToolsetMap, err := getGitHubToolToToolsetMap()
+	if err != nil {
+		t.Fatalf("getGitHubToolToToolsetMap() error = %v", err)
+	}
+	return toolToToolsetMap
 }
 
 // expandToolsetsForTesting expands "default" and "all" toolsets for testing purposes
