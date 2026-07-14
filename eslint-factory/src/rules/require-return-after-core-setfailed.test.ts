@@ -305,6 +305,20 @@ doMore();`,
     });
   });
 
+  it("valid: braceless if consequent with no continuation", () => {
+    ruleTester.run("require-return-after-core-setfailed", requireReturnAfterCoreSetFailedRule, {
+      valid: [
+        // No statement after the if — nothing to continue into
+        `function f() { if (bad) core.setFailed("x"); }`,
+        // Braced consequent with return, followed by doMore — already correctly valid
+        `function f() { if (bad) { core.setFailed("x"); return; } doMore(); }`,
+        // Braceless if at end of block — no continuation
+        `function f() { doSomething(); if (bad) core.setFailed("x"); }`,
+      ],
+      invalid: [],
+    });
+  });
+
   it("valid: locally-shadowed setFailed bindings are not flagged", () => {
     ruleTester.run("require-return-after-core-setfailed", requireReturnAfterCoreSetFailedRule, {
       valid: [
