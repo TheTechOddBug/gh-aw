@@ -362,6 +362,27 @@ const workshopSteps: WorkshopStep[] = await Promise.all(workshopEntries.map(asyn
 const initialFlow = buildWorkshopFlow(workshopDefaults.journeyId, workshopDefaults.scenarioId);
 const initialStepKey = initialFlow[0] ?? workshopSteps[0]?.key ?? '';
 const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ?? workshopSteps[0];
+
+// Precompute step counts for entry path cards using the default scenario (estimate shown before scenario is selected).
+const entryPathStepCounts: Record<string, number> = Object.fromEntries(
+	workshopEntryPaths.map((path) => [
+		path.id,
+		buildWorkshopFlow(path.journeyId, workshopDefaults.scenarioId).length,
+	]),
+);
+
+// Precompute step counts for every journey + scenario combination for the scenario picker.
+const scenarioStepCountsByJourney: Record<string, Record<string, number>> = Object.fromEntries(
+	workshopJourneys.map((journey) => [
+		journey.id,
+		Object.fromEntries(
+			workshopScenarios.map((scenario) => [
+				scenario.id,
+				buildWorkshopFlow(journey.id, scenario.id).length,
+			]),
+		),
+	]),
+);
 ---
 
 <section
@@ -390,7 +411,7 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 						>
 							<span class="aw-workshop-card-icon" set:html={iconSvg(path.icon)} />
 							<span class="aw-workshop-card-kicker">{path.kicker}</span>
-							<span class="aw-workshop-card-route">{journey.label}</span>
+							<span class="aw-workshop-card-route">{entryPathStepCounts[path.id]} steps</span>
 							<strong class="aw-workshop-card-title">{path.label}</strong>
 							<span class="aw-workshop-card-summary">{path.summary}</span>
 							<small class="aw-workshop-card-fit">{path.fit}</small>
@@ -416,6 +437,7 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 						>
 							<span class="aw-workshop-card-icon" set:html={iconSvg(scenario.icon)} />
 							<span class="aw-workshop-card-kicker">{scenario.kicker}</span>
+							<span class="aw-workshop-card-route" data-workshop-step-count></span>
 							<strong class="aw-workshop-card-title">{scenario.label}</strong>
 							<span class="aw-workshop-card-summary">{firstSentence(scenario.summary)}</span>
 						</button>
@@ -458,6 +480,7 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 				<div class="aw-workshop-panel-heading">
 					<p class="aw-workshop-panel-meta" data-workshop-step-position>Step 1</p>
 					<p class="aw-workshop-panel-summary" data-workshop-step-summary>{initialStep?.summary ?? 'Start with the welcome step, then follow the path selected above.'}</p>
+					<progress class="aw-workshop-step-progress" data-workshop-step-progress max="100" value="0" aria-label="Workshop step progress"></progress>
 				</div>
 				<div class="aw-workshop-panel-actions">
 					<button type="button" class="aw-workshop-inline-button aw-workshop-inline-button-home" data-workshop-home>
@@ -508,6 +531,7 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 			journeys: workshopJourneys,
 			scenarios: workshopScenarios,
 			scenarioAdventures: workshopScenarioAdventures,
+			scenarioStepCountsByJourney,
 		})}
 	/>
 	<script is:inline>
@@ -666,6 +690,7 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 			const nextButton = root.querySelector('[data-workshop-next]');
 			const stepBodyContainer = root.querySelector('[data-workshop-step-content]');
 			const stepSummary = root.querySelector('[data-workshop-step-summary]');
+			const stepProgressEl = root.querySelector('[data-workshop-step-progress]');
 			let setupStep = 'workspace';
 
 			const showSetupStep = (stepName, opts = {}) => {
@@ -821,6 +846,12 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 				stepSummary.textContent = activeStep.summary || 'Follow the guided path for this lesson.';
 				flowTitle.textContent = `${journey.label} x ${scenario.label}`;
 				stepPosition.textContent = stepIndex >= 0 ? `Step ${stepIndex + 1} of ${visibleFlow.length}` : 'Linked step';
+				if (stepProgressEl) {
+					const total = visibleFlow.length;
+					stepProgressEl.value = total > 0 && stepIndex >= 0
+						? Math.round(((stepIndex + 1) / total) * 100)
+						: 0;
+				}
 				stepBodyContainer.innerHTML = renderTutorialStep(activeStep);
 				root.dataset.workshopFlowKeys = visibleFlow.join(',');
 				root.dataset.workshopCurrentStep = activeStep.key;
@@ -835,6 +866,17 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 					const isActive = button.getAttribute('data-workshop-scenario') === state.scenarioId;
 					button.classList.toggle('is-active', isActive);
 					button.setAttribute('aria-pressed', String(isActive));
+
+					const stepCountEl = button.querySelector('[data-workshop-step-count]');
+					if (stepCountEl) {
+						const scenarioId = button.getAttribute('data-workshop-scenario');
+						if (scenarioId) {
+							const count = (manifest.scenarioStepCountsByJourney || {})[state.journeyId]?.[scenarioId];
+							if (count != null) {
+								stepCountEl.textContent = `${count} steps`;
+							}
+						}
+					}
 				});
 
 				const flowIndex = visibleFlow.indexOf(activeStep.key);
@@ -1111,6 +1153,14 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 		font-weight: 700;
 		letter-spacing: 0.04em;
 		white-space: nowrap;
+	}
+
+	.aw-workshop-card-route:empty {
+		display: none;
+	}
+
+	.aw-workshop-step-progress {
+		display: none;
 	}
 
 	.aw-workshop-card-scenario {
@@ -1577,6 +1627,34 @@ const initialStep = workshopSteps.find((item) => item.key === initialStepKey) ??
 			width: 100%;
 			justify-content: center;
 			text-align: center;
+		}
+
+		.aw-workshop-step-progress {
+			display: block;
+			width: 100%;
+			height: 3px;
+			margin: 0;
+			border: none;
+			border-radius: 999px;
+			background: var(--aw-border);
+			-webkit-appearance: none;
+			appearance: none;
+		}
+
+		.aw-workshop-step-progress::-webkit-progress-bar {
+			background: var(--aw-border);
+			border-radius: 999px;
+		}
+
+		.aw-workshop-step-progress::-webkit-progress-value {
+			background: var(--sl-color-accent);
+			border-radius: 999px;
+			transition: width 0.3s ease;
+		}
+
+		.aw-workshop-step-progress::-moz-progress-bar {
+			background: var(--sl-color-accent);
+			border-radius: 999px;
 		}
 	}
 
