@@ -1,0 +1,2 @@
+{"id":"merged_prs_analyzed","question":"Did the agent analyze Copilot pull requests merged in the last 24 hours?","answer":"UNKNOWN","model":"small","timestamp":"2026-07-23T17:21:44.183Z","runid":"29759396892"}
+{"id":"report_created","question":"Was a daily report created tracking code generation, tests, and token usage trends?","answer":"UNKNOWN","model":"small","timestamp":"2026-07-23T17:21:44.183Z","runid":"29759396892"}
