@@ -1,0 +1,2 @@
+{"id":"benchmarks_run","question":"Did the agent run CLI performance benchmarks and track performance trends?","answer":"UNKNOWN","model":"small","timestamp":"2026-07-24T02:54:49.911Z","runid":"29758773751"}
+{"id":"report_created_or_regression_flagged","question":"Was a performance report produced, or was a regression flagged when performance degraded?","answer":"UNKNOWN","model":"small","timestamp":"2026-07-24T02:54:49.911Z","runid":"29758773751"}
