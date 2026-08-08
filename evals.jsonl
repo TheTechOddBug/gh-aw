@@ -1,2 +1,4 @@
 {"id":"large_files_analyzed","question":"Did the agent analyze the largest Go source files in the repository?","answer":"UNKNOWN","model":"small","timestamp":"2026-07-26T14:43:40.908Z","runid":"30017754021"}
 {"id":"issue_created_or_noop","question":"Was a refactoring issue created for files exceeding the healthy size threshold, or was noop used when all files were within limits?","answer":"UNKNOWN","model":"small","timestamp":"2026-07-26T14:43:40.908Z","runid":"30017754021"}
+{"id":"large_files_analyzed","question":"Did the agent analyze the largest Go source files in the repository?","answer":"UNKNOWN","model":"evals","timestamp":"2026-08-08T02:51:17.556Z","runid":"30922297471"}
+{"id":"issue_created_or_noop","question":"Was a refactoring issue created for files exceeding the healthy size threshold, or was noop used when all files were within limits?","answer":"UNKNOWN","model":"evals","timestamp":"2026-08-08T02:51:17.556Z","runid":"30922297471"}
