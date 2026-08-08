@@ -1,2 +1,4 @@
 {"id":"activity_collected","question":"Did the agent collect daily repository activity including commits, PRs, issues, and discussions?","answer":"UNKNOWN","model":"small","timestamp":"2026-08-04T19:13:33.944Z","runid":"30649320552"}
 {"id":"chronicle_created","question":"Was a narrative chronicle discussion or report created summarizing the day's activity?","answer":"UNKNOWN","model":"small","timestamp":"2026-08-04T19:13:33.944Z","runid":"30649320552"}
+{"id":"activity_collected","question":"Did the agent collect daily repository activity including commits, PRs, issues, and discussions?","answer":"UNKNOWN","model":"evals","timestamp":"2026-08-08T00:17:50.225Z","runid":"30932361446"}
+{"id":"chronicle_created","question":"Was a narrative chronicle discussion or report created summarizing the day's activity?","answer":"UNKNOWN","model":"evals","timestamp":"2026-08-08T00:17:50.225Z","runid":"30932361446"}
