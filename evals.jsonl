@@ -1,2 +1,4 @@
 {"id":"pr_conversations_analyzed","question":"Did the agent perform NLP analysis on Copilot PR conversations?","answer":"UNKNOWN","model":"small","timestamp":"2026-08-01T13:52:25.600Z","runid":"30450554712"}
 {"id":"insights_report_produced","question":"Was a report produced with extracted insights and patterns from user interactions?","answer":"UNKNOWN","model":"small","timestamp":"2026-08-01T13:52:25.600Z","runid":"30450554712"}
+{"id":"pr_conversations_analyzed","question":"Did the agent perform NLP analysis on Copilot PR conversations?","answer":"UNKNOWN","model":"evals","timestamp":"2026-08-14T23:07:24.281Z","runid":"31484661410"}
+{"id":"insights_report_produced","question":"Was a report produced with extracted insights and patterns from user interactions?","answer":"UNKNOWN","model":"evals","timestamp":"2026-08-14T23:07:24.281Z","runid":"31484661410"}
