@@ -11,3 +11,4 @@
 {"run_id":"32177481359","timestamp":"2026-08-22T00:04:22.080Z","assignments":{"sub_agent_strategy":"inline_strict"}}
 {"run_id":"32593961586","timestamp":"2026-08-25T02:02:07.874Z","harness_version":"c353474561ffe102fead57525a110e5fff09f0c18923938b574aeab5cce00ed9:0daed06ad9ab37f712e54a71683b2f3c690ab0cce61735ab8ecf312216a2f4ec","assignments":{"sub_agent_strategy":"single_agent_control"}}
 {"run_id":"32661474196","timestamp":"2026-08-25T02:32:23.050Z","harness_version":"c353474561ffe102fead57525a110e5fff09f0c18923938b574aeab5cce00ed9:0daed06ad9ab37f712e54a71683b2f3c690ab0cce61735ab8ecf312216a2f4ec","assignments":{"sub_agent_strategy":"single_agent_control"}}
+{"run_id":"32769392239","timestamp":"2026-08-27T03:57:19.383Z","harness_version":"c353474561ffe102fead57525a110e5fff09f0c18923938b574aeab5cce00ed9:0daed06ad9ab37f712e54a71683b2f3c690ab0cce61735ab8ecf312216a2f4ec","assignments":{"sub_agent_strategy":"inline_strict"}}
